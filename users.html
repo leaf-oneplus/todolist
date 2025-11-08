@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - 待办事项系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(100, 200, 255, 0.4);
+            border-radius: 50%;
+            animation: float linear infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 20px 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            color: rgba(100, 200, 255, 0.9);
+        }
+
+        .nav-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 20px;
+        }
+
+        .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .user-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.3s;
+        }
+
+        .user-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(100, 200, 255, 0.4);
+        }
+
+        .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .user-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .user-role {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .role-super {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.4);
+        }
+
+        .role-admin {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+            border: 1px solid rgba(76, 175, 80, 0.4);
+        }
+
+        .role-user {
+            background: rgba(100, 200, 255, 0.2);
+            color: #64c8ff;
+            border: 1px solid rgba(100, 200, 255, 0.4);
+        }
+
+        .user-info {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 600;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 14px;
+            color: white;
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: rgba(100, 200, 255, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .form-select option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: rgba(100, 200, 255, 0.3);
+            border: 1px solid rgba(100, 200, 255, 0.5);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: rgba(100, 200, 255, 0.4);
+            border-color: rgba(100, 200, 255, 0.7);
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            color: #4caf50;
+        }
+
+        .message.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.5);
+            color: #f44336;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .btn-small:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-edit {
+            border-color: rgba(100, 200, 255, 0.4);
+            color: #64c8ff;
+        }
+
+        .btn-edit:hover {
+            background: rgba(100, 200, 255, 0.2);
+            border-color: rgba(100, 200, 255, 0.6);
+        }
+
+        .btn-reset {
+            border-color: rgba(255, 193, 7, 0.4);
+            color: #ffc107;
+        }
+
+        .btn-reset:hover {
+            background: rgba(255, 193, 7, 0.2);
+            border-color: rgba(255, 193, 7, 0.6);
+        }
+
+        .btn-delete {
+            border-color: rgba(244, 67, 54, 0.4);
+            color: #f44336;
+        }
+
+        .btn-delete:hover {
+            background: rgba(244, 67, 54, 0.2);
+            border-color: rgba(244, 67, 54, 0.6);
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 14px;
+            color: white;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: rgba(100, 200, 255, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 20px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-confirm {
+            flex: 1;
+            padding: 12px;
+            background: rgba(100, 200, 255, 0.3);
+            border: 1px solid rgba(100, 200, 255, 0.5);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-confirm:hover {
+            background: rgba(100, 200, 255, 0.4);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: rgba(100, 200, 255, 0.9);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 4px;
+        }
+
+        .manager-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(100, 200, 255, 0.2);
+            border: 1px solid rgba(100, 200, 255, 0.4);
+            border-radius: 16px;
+            margin: 4px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .manager-tag-remove {
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .manager-tag-remove:hover {
+            color: #f44336;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .header {
+                padding: 16px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .title {
+                font-size: 20px;
+                text-align: center;
+            }
+
+            .nav-btns {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .nav-btn {
+                width: 100%;
+                text-align: center;
+                padding: 10px 16px;
+            }
+
+            .content {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .panel {
+                padding: 20px 16px;
+            }
+
+            .panel-title {
+                font-size: 18px;
+                margin-bottom: 16px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            .stat-value {
+                font-size: 20px;
+            }
+
+            .stat-label {
+                font-size: 11px;
+            }
+
+            .user-card {
+                padding: 14px;
+            }
+
+            .user-name {
+                font-size: 15px;
+            }
+
+            .user-role {
+                font-size: 11px;
+                padding: 3px 8px;
+            }
+
+            .user-info {
+                font-size: 11px;
+            }
+
+            .user-actions {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .btn-small {
+                flex: 1;
+                min-width: calc(50% - 3px);
+                font-size: 11px;
+                padding: 8px 10px;
+            }
+
+            .form-input, .form-select {
+                font-size: 16px; /* 防止 iOS 自动缩放 */
+                padding: 14px 12px;
+            }
+
+            .form-label {
+                font-size: 13px;
+            }
+
+            .btn-primary {
+                padding: 14px;
+                font-size: 15px;
+            }
+
+            .search-input {
+                font-size: 16px; /* 防止 iOS 自动缩放 */
+                padding: 14px 12px;
+            }
+
+            .modal-content {
+                padding: 20px;
+                width: 95%;
+                max-height: 85vh;
+            }
+
+            .modal-title {
+                font-size: 18px;
+                margin-bottom: 16px;
+            }
+
+            .modal-actions {
+                flex-direction: column;
+            }
+
+            .btn-cancel, .btn-confirm {
+                width: 100%;
+            }
+
+            .manager-tag {
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-small {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="title">👥 用户管理</div>
+            <div class="nav-btns">
+                <a href="admin.html" class="nav-btn">返回控制台</a>
+                <button class="nav-btn" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="panel">
+                <div class="panel-title">用户列表</div>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalUsers">0</div>
+                        <div class="stat-label">总用户数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminCount">0</div>
+                        <div class="stat-label">管理员</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="userCount">0</div>
+                        <div class="stat-label">普通用户</div>
+                    </div>
+                </div>
+
+                <div class="search-box">
+                    <input type="text" class="search-input" id="searchInput" placeholder="🔍 搜索用户名...">
+                </div>
+
+                <div class="user-list" id="userList">
+                    <div style="text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.5);">
+                        加载中...
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">添加新用户</div>
+                
+                <div class="message" id="message"></div>
+
+                <form id="addUserForm">
+                    <div class="form-group">
+                        <label class="form-label">用户名（显示名称）</label>
+                        <input type="text" class="form-input" id="newUsername" placeholder="输入用户名" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">登录名（用于登录）</label>
+                        <input type="text" class="form-input" id="newLoginName" placeholder="输入登录名" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">密码</label>
+                        <input type="password" class="form-input" id="newPassword" placeholder="输入密码（至少6位）" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">角色</label>
+                        <select class="form-select" id="newRole" required>
+                            <option value="user">普通用户</option>
+                            <option value="admin">部门管理员</option>
+                            <option value="super_admin">超级管理员</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">上级管理员（可选，支持多个）</label>
+                        <div id="newUserManagers" style="margin-bottom: 10px; min-height: 30px;"></div>
+                        <div style="display: flex; gap: 8px;">
+                            <select class="form-select" id="newManagerSelect" style="flex: 1;">
+                                <option value="">选择上级...</option>
+                            </select>
+                            <button type="button" class="btn-confirm" onclick="addNewUserManager()" style="width: auto; padding: 8px 16px;">添加</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary">添加用户</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑用户模态框 -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-title">编辑用户</div>
+            <form id="editUserForm">
+                <input type="hidden" id="editUserId">
+                
+                <div class="form-group">
+                    <label class="form-label">登录名（不可修改）</label>
+                    <input type="text" class="form-input" id="editLoginName" readonly style="background: rgba(255, 255, 255, 0.05); cursor: not-allowed;">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">用户名（显示名称）</label>
+                    <input type="text" class="form-input" id="editUsername" placeholder="输入用户名" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">角色</label>
+                    <select class="form-select" id="editRole" required>
+                        <option value="user">普通用户</option>
+                        <option value="admin">部门管理员</option>
+                        <option value="super_admin">超级管理员</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">上级管理员（支持多个）</label>
+                    <div id="currentManagers" style="margin-bottom: 10px;"></div>
+                    <div style="display: flex; gap: 8px;">
+                        <select class="form-select" id="editManagerSelect" style="flex: 1;">
+                            <option value="">选择要添加的上级...</option>
+                        </select>
+                        <button type="button" class="btn-confirm" onclick="addManager()" style="width: auto; padding: 8px 16px;">添加</button>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeEditModal()">取消</button>
+                    <button type="submit" class="btn-confirm">保存修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 重置密码模态框 -->
+    <div class="modal" id="resetModal">
+        <div class="modal-content">
+            <div class="modal-title">重置密码</div>
+            <form id="resetPasswordForm">
+                <input type="hidden" id="resetUserId">
+                
+                <div class="form-group">
+                    <label class="form-label">用户名</label>
+                    <input type="text" class="form-input" id="resetUsername" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">新密码</label>
+                    <input type="password" class="form-input" id="resetPassword" placeholder="输入新密码（至少6位）" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">确认密码</label>
+                    <input type="password" class="form-input" id="resetPasswordConfirm" placeholder="再次输入新密码" required>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeResetModal()">取消</button>
+                    <button type="submit" class="btn-confirm">重置密码</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = `${window.location.protocol}//${window.location.host}/api`;
+
+        // 创建粒子
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 4 + 2;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDuration = (Math.random() * 20 + 15) + 's';
+                particle.style.animationDelay = Math.random() * 5 + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        createParticles();
+
+        // 全局变量
+        let allUsers = [];
+        let currentUserRole = '';
+
+        // 初始化
+        init();
+
+        async function init() {
+            await getCurrentUser();
+            await loadUsers();
+            await loadManagers();
+            setupSearch();
+            setupRoleOptions();
+            renderNewUserManagers(); // 初始化新用户上级显示
+        }
+
+        // 获取当前用户信息
+        async function getCurrentUser() {
+            try {
+                const response = await fetch(`${API_URL}/current-user`, {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const user = await response.json();
+                    currentUserRole = user.role;
+                }
+            } catch (error) {
+                console.error('获取用户信息失败:', error);
+            }
+        }
+
+        // 设置角色选项（部门管理员不能选择超级管理员）
+        function setupRoleOptions() {
+            if (currentUserRole === 'admin') {
+                // 移除超级管理员选项
+                const newRoleSelect = document.getElementById('newRole');
+                const editRoleSelect = document.getElementById('editRole');
+                
+                const superAdminOption = newRoleSelect.querySelector('option[value="super_admin"]');
+                if (superAdminOption) {
+                    superAdminOption.remove();
+                }
+                
+                const editSuperAdminOption = editRoleSelect.querySelector('option[value="super_admin"]');
+                if (editSuperAdminOption) {
+                    editSuperAdminOption.remove();
+                }
+            }
+        }
+
+        // 搜索功能
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', (e) => {
+                const keyword = e.target.value.toLowerCase().trim();
+                if (keyword) {
+                    const filtered = allUsers.filter(user => 
+                        user.username.toLowerCase().includes(keyword)
+                    );
+                    renderUsers(filtered);
+                } else {
+                    renderUsers(allUsers);
+                }
+            });
+        }
+
+        // 加载用户列表
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_URL}/users/all`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/login.html';
+                        return;
+                    }
+                    throw new Error('加载失败');
+                }
+
+                const users = await response.json();
+                allUsers = users;
+                renderUsers(users);
+                updateStats(users);
+            } catch (error) {
+                console.error('加载用户失败:', error);
+                document.getElementById('userList').innerHTML = 
+                    '<div style="text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.5);">加载失败</div>';
+            }
+        }
+
+        // 新用户的上级列表
+        let newUserManagerIds = [];
+
+        // 加载管理员列表
+        async function loadManagers() {
+            try {
+                const response = await fetch(`${API_URL}/users/managers`, {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const managers = await response.json();
+                    window.allManagers = managers; // 保存到全局变量
+                    
+                    // 更新添加新用户的下拉框
+                    const select = document.getElementById('newManagerSelect');
+                    select.innerHTML = '<option value="">选择上级...</option>' +
+                        managers.map(m => `<option value="${m.id}">${m.username} (${getRoleText(m.role)})</option>`).join('');
+                }
+            } catch (error) {
+                console.error('加载管理员列表失败:', error);
+            }
+        }
+
+        // 添加新用户的上级
+        function addNewUserManager() {
+            const managerId = parseInt(document.getElementById('newManagerSelect').value);
+            
+            if (!managerId) {
+                showMessage('请选择上级', 'error');
+                return;
+            }
+
+            if (newUserManagerIds.includes(managerId)) {
+                showMessage('该上级已添加', 'error');
+                return;
+            }
+
+            newUserManagerIds.push(managerId);
+            renderNewUserManagers();
+            document.getElementById('newManagerSelect').value = '';
+        }
+
+        // 渲染新用户的上级列表
+        function renderNewUserManagers() {
+            const container = document.getElementById('newUserManagers');
+            
+            if (newUserManagerIds.length === 0) {
+                container.innerHTML = '<div style="color: rgba(255, 255, 255, 0.5); font-size: 13px;">暂未选择上级</div>';
+                return;
+            }
+
+            container.innerHTML = newUserManagerIds.map(id => {
+                const manager = window.allManagers.find(m => m.id === id);
+                if (!manager) return '';
+                
+                return `
+                    <span class="manager-tag">
+                        ${escapeHtml(manager.username)} (${getRoleText(manager.role)})
+                        <span class="manager-tag-remove" onclick="removeNewUserManager(${id})">×</span>
+                    </span>
+                `;
+            }).join('');
+        }
+
+        // 删除新用户的上级
+        function removeNewUserManager(managerId) {
+            newUserManagerIds = newUserManagerIds.filter(id => id !== managerId);
+            renderNewUserManagers();
+        }
+
+        // 更新统计信息
+        function updateStats(users) {
+            document.getElementById('totalUsers').textContent = users.length;
+            document.getElementById('adminCount').textContent = 
+                users.filter(u => u.role === 'super_admin' || u.role === 'admin').length;
+            document.getElementById('userCount').textContent = 
+                users.filter(u => u.role === 'user').length;
+        }
+
+        // 渲染用户列表
+        function renderUsers(users) {
+            const container = document.getElementById('userList');
+            
+            if (users.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.5);">暂无用户</div>';
+                return;
+            }
+
+            container.innerHTML = users.map(user => {
+                // 部门管理员不能操作超级管理员
+                const canOperate = !(currentUserRole === 'admin' && user.role === 'super_admin');
+                
+                return `
+                    <div class="user-card">
+                        <div class="user-header">
+                            <div class="user-name">${escapeHtml(user.username)}</div>
+                            <div class="user-role ${getRoleClass(user.role)}">${getRoleText(user.role)}</div>
+                        </div>
+                        <div class="user-info">
+                            登录名: ${escapeHtml(user.login_name || user.username)} | 
+                            ${user.manager_names ? `上级: ${escapeHtml(user.manager_names)}` : '无上级'} | 
+                            创建于: ${formatDate(user.created_at)}
+                        </div>
+                        ${canOperate ? `
+                            <div class="user-actions">
+                                <button class="btn-small btn-edit" onclick="openEditModal(${user.id})">✏️ 编辑</button>
+                                <button class="btn-small btn-reset" onclick="openResetModal(${user.id})">🔑 重置密码</button>
+                                <button class="btn-small btn-delete" onclick="deleteUser(${user.id})">🗑️ 删除</button>
+                            </div>
+                        ` : `
+                            <div class="user-actions">
+                                <span style="color: rgba(255, 255, 255, 0.5); font-size: 12px;">无操作权限</span>
+                            </div>
+                        `}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 添加用户
+        document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('newUsername').value.trim();
+            const login_name = document.getElementById('newLoginName').value.trim();
+            const password = document.getElementById('newPassword').value;
+            const role = document.getElementById('newRole').value;
+
+            if (!username || !login_name) {
+                showMessage('用户名和登录名不能为空', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showMessage('密码至少需要6位', 'error');
+                return;
+            }
+
+            try {
+                // 1. 创建用户
+                const response = await fetch(`${API_URL}/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        username,
+                        login_name,
+                        password,
+                        role,
+                        managerId: null // 不再使用单一上级
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showMessage(data.error || '添加失败', 'error');
+                    return;
+                }
+
+                // 2. 如果有选择上级，添加上级关系
+                const newUserId = data.id;
+                if (newUserManagerIds.length > 0) {
+                    for (const managerId of newUserManagerIds) {
+                        try {
+                            await fetch(`${API_URL}/users/${newUserId}/managers`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                credentials: 'include',
+                                body: JSON.stringify({ managerId })
+                            });
+                        } catch (error) {
+                            console.error('添加上级失败:', error);
+                        }
+                    }
+                }
+
+                showMessage('用户添加成功！', 'success');
+                document.getElementById('addUserForm').reset();
+                newUserManagerIds = [];
+                renderNewUserManagers();
+                await loadUsers();
+                await loadManagers();
+            } catch (error) {
+                showMessage('网络错误: ' + error.message, 'error');
+            }
+        });
+
+        // 显示消息
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+            
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 3000);
+        }
+
+        // 工具函数
+        function getRoleText(role) {
+            switch(role) {
+                case 'super_admin': return '超级管理员';
+                case 'admin': return '部门管理员';
+                case 'user': return '普通用户';
+                default: return role;
+            }
+        }
+
+        function getRoleClass(role) {
+            switch(role) {
+                case 'super_admin': return 'role-super';
+                case 'admin': return 'role-admin';
+                case 'user': return 'role-user';
+                default: return 'role-user';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString.replace(' ', 'T'));
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // 当前编辑的用户ID
+        let currentEditUserId = null;
+
+        // 打开编辑模态框
+        async function openEditModal(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (!user) return;
+
+            currentEditUserId = userId;
+
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('editLoginName').value = user.login_name || user.username;
+            document.getElementById('editUsername').value = user.username;
+            document.getElementById('editRole').value = user.role;
+            
+            // 加载当前上级和可选上级列表
+            await loadCurrentManagers(userId);
+            await loadAvailableManagers();
+            
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+            currentEditUserId = null;
+        }
+
+        // 加载当前上级列表
+        async function loadCurrentManagers(userId) {
+            try {
+                const response = await fetch(`${API_URL}/users/${userId}/managers`, {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const managers = await response.json();
+                    const container = document.getElementById('currentManagers');
+                    
+                    if (managers.length === 0) {
+                        container.innerHTML = '<div style="color: rgba(255, 255, 255, 0.5); font-size: 13px;">暂无上级</div>';
+                    } else {
+                        container.innerHTML = managers.map(m => `
+                            <span class="manager-tag">
+                                ${escapeHtml(m.username)} (${getRoleText(m.role)})
+                                <span class="manager-tag-remove" onclick="removeManager(${m.id})">×</span>
+                            </span>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('加载当前上级失败:', error);
+            }
+        }
+
+        // 加载可选的管理员列表
+        async function loadAvailableManagers() {
+            try {
+                const response = await fetch(`${API_URL}/users/managers`, {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const managers = await response.json();
+                    const select = document.getElementById('editManagerSelect');
+                    
+                    select.innerHTML = '<option value="">选择要添加的上级...</option>' +
+                        managers.map(m => 
+                            `<option value="${m.id}">${m.username} (${getRoleText(m.role)})</option>`
+                        ).join('');
+                }
+            } catch (error) {
+                console.error('加载管理员列表失败:', error);
+            }
+        }
+
+        // 添加上级
+        async function addManager() {
+            const managerId = document.getElementById('editManagerSelect').value;
+            
+            if (!managerId) {
+                showMessage('请选择要添加的上级', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/users/${currentEditUserId}/managers`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ managerId: parseInt(managerId) })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('添加成功！', 'success');
+                    await loadCurrentManagers(currentEditUserId);
+                    document.getElementById('editManagerSelect').value = '';
+                } else {
+                    showMessage(data.error || '添加失败', 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误: ' + error.message, 'error');
+            }
+        }
+
+        // 删除上级
+        async function removeManager(managerId) {
+            if (!confirm('确定要删除这个上级吗？')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/users/${currentEditUserId}/managers/${managerId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('删除成功！', 'success');
+                    await loadCurrentManagers(currentEditUserId);
+                    await loadUsers(); // 刷新用户列表
+                } else {
+                    showMessage(data.error || '删除失败', 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误: ' + error.message, 'error');
+            }
+        }
+
+        // 提交编辑（只更新角色，上级通过添加/删除按钮管理）
+        document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('editUserId').value;
+            const username = document.getElementById('editUsername').value.trim();
+            const role = document.getElementById('editRole').value;
+
+            if (!username) {
+                showMessage('用户名不能为空', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        username,
+                        role,
+                        managerId: null // 不再通过这个API更新上级
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('用户信息更新成功！', 'success');
+                    closeEditModal();
+                    await loadUsers();
+                    await loadManagers();
+                } else {
+                    showMessage(data.error || '更新失败', 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误: ' + error.message, 'error');
+            }
+        });
+
+        // 打开重置密码模态框
+        function openResetModal(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (!user) return;
+
+            document.getElementById('resetUserId').value = user.id;
+            document.getElementById('resetUsername').value = user.username;
+            document.getElementById('resetPassword').value = '';
+            document.getElementById('resetPasswordConfirm').value = '';
+            
+            document.getElementById('resetModal').classList.add('active');
+        }
+
+        function closeResetModal() {
+            document.getElementById('resetModal').classList.remove('active');
+        }
+
+        // 提交重置密码
+        document.getElementById('resetPasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('resetUserId').value;
+            const password = document.getElementById('resetPassword').value;
+            const passwordConfirm = document.getElementById('resetPasswordConfirm').value;
+
+            if (password.length < 6) {
+                showMessage('密码至少需要6位', 'error');
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                showMessage('两次输入的密码不一致', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/users/${userId}/password`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('密码重置成功！', 'success');
+                    closeResetModal();
+                } else {
+                    showMessage(data.error || '重置失败', 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误: ' + error.message, 'error');
+            }
+        });
+
+        // 删除用户
+        async function deleteUser(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (!user) return;
+
+            if (!confirm(`确定要删除用户"${user.username}"吗？\n\n此操作不可恢复！`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/users/${userId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('用户删除成功！', 'success');
+                    await loadUsers();
+                    await loadManagers();
+                } else {
+                    showMessage(data.error || '删除失败', 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误: ' + error.message, 'error');
+            }
+        }
+
+        async function logout() {
+            if (!confirm('确定要退出登录吗？')) return;
+            
+            try {
+                await fetch(`${API_URL}/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (error) {
+                console.error('退出失败:', error);
+            }
+            
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+</html>

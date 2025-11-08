@@ -1,0 +1,31 @@
+{
+  "name": "todo-desktop",
+  "version": "1.0.0",
+  "description": "桌面待办事项应用",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "wallpaper": "electron wallpaper-electron.js",
+    "server": "node server.js",
+    "server-db": "node server-db.js",
+    "init-db": "node init-db.js",
+    "build": "electron-builder"
+  },
+  "keywords": ["todo", "desktop", "electron"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "sqlite3": "^5.1.6",
+    "bcrypt": "^5.1.1",
+    "express-session": "^1.17.3",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0"
+  }
+}
